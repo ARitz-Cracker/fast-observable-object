@@ -1,0 +1,47 @@
+{
+	"name": "fast-observable-object",
+	"description": "Proxy objects were too slow for me",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"docs": "jsdoc ./index.js ./README.md -d docs",
+		"test": "mocha",
+		"test:all": "TEST_EVERYTHING=y mocha",
+		"test:cov": "nyc --check-coverage --lines 100 --functions 100 --branches 100 --statements 100 mocha",
+		"test:final": "eslint . && npm run test:cov",
+		"test:lint": "eslint .",
+		"ci:start": "npm run test:final",
+		"ci:after": "nyc report --reporter=text-lcov | coveralls",
+		"prepublishOnly": "npm run test:final",
+		"postinstall": "node scripts/postinstall.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ARitz-Cracker/fast-observable-object"
+	},
+	"homepage": "https://github.com/ARitz-Cracker/fast-observable-object",
+	"keywords": [
+		"observable",
+		"observe",
+		"watch",
+		"change"
+	],
+	"author": {
+		"name": "Aritz Beobide-Cardinal",
+		"email": "aritz@aritzcracker.ca"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"safeify-object": "^1.0.0"
+	},
+	"devDependencies": {
+		"chai": "^4.2.0",
+		"chai-as-promised": "^7.1.1",
+		"chai-eventemitter": "^1.1.1",
+		"eslint": "^6.6.0",
+		"eslint-plugin-mocha": "^8.0.0",
+		"mocha": "^6.2.2",
+		"nyc": "^14.1.1",
+		"jsdoc": "^3.6.6"
+	}
+}
