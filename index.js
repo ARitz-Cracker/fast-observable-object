@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const {EventEmitter} = require("events");
 const {isSafeProperty} = require("safeify-object");
+const symbolObserver = Symbol.for("ca.aritzcracker.fast_object_observer");
 class FastObjectObserver extends EventEmitter {
 	/**
 	 * @param {Object} observedObject the object to
@@ -41,6 +42,11 @@ class FastObjectObserver extends EventEmitter {
 		 * `delete` keyword. Set the property's value to `undefined`.
 		 */
 		this.object = Object.create(proxy);
+		Object.defineProperty(this.object, symbolObserver, {
+			value: this,
+			configurable: false,
+			writable: false
+		});
 		for(const k in observedObject){
 			if(this.isInvalidProperty(k)){
 				delete observedObject[k];
@@ -105,7 +111,11 @@ class FastObjectObserver extends EventEmitter {
 		}
 		if(value === undefined){
 			if(typeof oldValue === "object" && oldValue !== null){
-				this._observedObjects.delete(oldValue);
+				this._observedObjects.delete(
+					oldValue[symbolObserver] == null ?
+					oldValue :
+					oldValue[symbolObserver]._observedObject
+				);
 			}
 			delete this._observedObject[key];
 			delete this.object[key];
@@ -114,7 +124,7 @@ class FastObjectObserver extends EventEmitter {
 			 * @param {Array<string>} path
 			 */
 			this._rootObserver.emit("propertyDeleted", this._objectPath.concat(key));
-			return;
+			return true;
 		}
 		this._observedObject[key] = value;
 		if(typeof value === "object" && value !== null){
@@ -125,6 +135,7 @@ class FastObjectObserver extends EventEmitter {
 		 * @param {Array<string>} path
 		 */
 		this._rootObserver.emit("propertyChanged", this._objectPath.concat(key), value);
+		return true;
 	}
 	/**
 	 * @private

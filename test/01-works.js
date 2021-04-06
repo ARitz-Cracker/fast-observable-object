@@ -88,6 +88,16 @@ describe("Observable objects", function(){
 			observer.object.o = innerObject;
 			observer.object.o = undefined;
 			observer.object.o = innerObject;
-		}).to.throw();
+		}).not.to.throw();
+	});
+	it("allows properties to be added on nested objects", function(){
+		const innerObject = {};
+		const observer = new FastObjectObserver({
+			o: {}
+		});
+		expect(function(){
+			observer.object.o.o = "aaaa";
+		}).not.to.throw();
+		expect(observer.object.o.o).to.equal("aaaa");
 	});
 });
