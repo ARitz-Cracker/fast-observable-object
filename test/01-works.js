@@ -91,10 +91,7 @@ describe("Observable objects", function(){
 		}).not.to.throw();
 	});
 	it("allows properties to be added on nested objects", function(){
-		const innerObject = {};
-		const observer = new FastObjectObserver({
-			o: {}
-		});
+		const observer = new FastObjectObserver({o: {}});
 		expect(function(){
 			observer.object.o.o = "aaaa";
 		}).not.to.throw();

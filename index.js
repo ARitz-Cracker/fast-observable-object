@@ -110,12 +110,8 @@ class FastObjectObserver extends EventEmitter {
 			return true;
 		}
 		if(value === undefined){
-			if(typeof oldValue === "object" && oldValue !== null){
-				this._observedObjects.delete(
-					oldValue[symbolObserver] == null ?
-					oldValue :
-					oldValue[symbolObserver]._observedObject
-				);
+			if(typeof oldValue === "object" && oldValue !== null && oldValue[symbolObserver] != null){
+				this._observedObjects.delete(oldValue[symbolObserver]._observedObject);
 			}
 			delete this._observedObject[key];
 			delete this.object[key];
