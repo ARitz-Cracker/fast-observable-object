@@ -3,7 +3,7 @@
 if(process.env.NODE_ENV !== "production"){
 	return;
 }
-console.log("This is a production enviroment! Removing excess crap...");
+console.log("This is a production enviroment! Removing unused files...");
 const fs = require("fs");
 const foldersToRemove = ["test"];
 const filesToRemove = [

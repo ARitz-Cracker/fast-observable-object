@@ -22,3 +22,14 @@ observedObject.nestedObject = undefined; // emits observer#propertyDeleted(["nes
 
 Documentation will be uploaded to my website as soon that's up. There's still JSDoc comments all over the source,
 though. So you should be fine.
+
+There should be some things you should know, though.
+
+* Only JSON-able objects as well as BigInts are supported. So no Buffers, Dates, or anything like that.
+* Circular values or objects being in multiple places isn't allowed.
+* Putting an observed object inside another observed object is undefined behaviour and shouldn't be done
+* Child observe objects which have been deleted from their parent will be effectively unusable (or broken) afterwards.
+* Note while this library can observe array's, they will be extremly slow compared to normal objects, as getter/setter functions cannot be defined on array's. Also note some additional pitfalls with arrays
+  * Array#splice will always return a _copy_ of nested objects which have been removed
+  * Array#copyWithin is undefined behaviour when moving objects around
+  * Any Array function returns a copy of the array, while not modifying the observed array like Array#concat and Array#slice will not create a copy of nested objects, as long as such objects still exist within the original array they will still be observed
