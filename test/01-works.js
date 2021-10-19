@@ -71,7 +71,7 @@ describe("Observable objects", function(){
 			.to.emit("error", {count: 0})
 			.to.emit("propertyChanged", {withArgs: [[0], "aa"]})
 			.on(() => {
-				observer.object[0] = "aa"
+				observer.object[0] = "aa";
 			});
 	});
 	it("observes pre-defined nested arrays", function(){
@@ -80,7 +80,7 @@ describe("Observable objects", function(){
 			.to.emit("error", {count: 0})
 			.to.emit("propertyChanged", {withArgs: [[0, 0], "aa"]})
 			.on(() => {
-				observer.object[0][0] = "aa"
+				observer.object[0][0] = "aa";
 			});
 	});
 	it("observes nested arrays defined in runtime", function(){
@@ -91,7 +91,7 @@ describe("Observable objects", function(){
 			.to.emit("propertyChanged", {withArgs: [[0, 0], "aa"]})
 			.on(() => {
 				observer.object[0] = [];
-				observer.object[0][0] = "aa"
+				observer.object[0][0] = "aa";
 			});
 	});
 	it("works with Array#push", function(){
@@ -269,7 +269,7 @@ describe("Observable objects", function(){
 			.on(() => {
 				observer.setValue(["a"], undefined);
 			});
-		expect(observer.object).to.not.haveOwnProperty("a")
+		expect(observer.object).to.not.haveOwnProperty("a");
 	});
 	it("has the abilities for values to be set/changed/deleted without emitting an event (nested objects)", function(){
 		const observer = new FastObjectObserver({o: {}});
@@ -293,7 +293,7 @@ describe("Observable objects", function(){
 			.on(() => {
 				observer.setValue(["o", "a"], undefined);
 			});
-		expect(observer.object.o).to.not.haveOwnProperty("a")
+		expect(observer.object.o).to.not.haveOwnProperty("a");
 	});
 	it("has values silent set still observable", function(){
 		const observer = new FastObjectObserver({});
@@ -368,7 +368,7 @@ describe("Observable objects", function(){
 			.on(() => {
 				observer.setValue(["length"], 0);
 			});
-			expect(observer.object).to.deep.equal([]);
+		expect(observer.object).to.deep.equal([]);
 	});
 	it("has the abilities for values to be set/changed/deleted without emitting an event (nested arrays)", function(){
 		const observer = new FastObjectObserver([[]]);
@@ -392,7 +392,7 @@ describe("Observable objects", function(){
 			.on(() => {
 				observer.setValue([0, "length"], 0);
 			});
-			expect(observer.object).to.deep.equal([[]]);
+		expect(observer.object).to.deep.equal([[]]);
 	});
 	it("has values silent set still observable (arrays)", function(){
 		const observer = new FastObjectObserver([]);
@@ -447,9 +447,7 @@ describe("Observable objects", function(){
 		expect(observer.object.asdf).to.equal(undefined);
 	});
 	it("makes a \"hole-y\" array when a value is set to undefined", function(){
-		const someSymbol = Symbol("something");
 		const observer = new FastObjectObserver(["asdf"]);
-		
 		expect(observer)
 			.to.emit("error", {count: 0})
 			.to.emit("propertyDeleted", {withArgs: [[0]]})
@@ -460,9 +458,7 @@ describe("Observable objects", function(){
 		expect(observer.object).to.not.haveOwnProperty("0");
 	});
 	it("makes a \"hole-y\" array when a value is set to undefined", function(){
-		const someSymbol = Symbol("something");
 		const observer = new FastObjectObserver(["asdf"]);
-		
 		expect(observer)
 			.to.emit("error", {count: 0})
 			.to.emit("propertyDeleted", {withArgs: [[0]]})
@@ -527,5 +523,4 @@ describe("Observable objects", function(){
 				observer.object[0].a = "asdf";
 			});
 	});
-
 });

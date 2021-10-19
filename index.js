@@ -14,7 +14,7 @@ const observedObjectToPureObject = function(obj){
 	if(typeof obj !== "object" || obj === null || !obj[symbolObserver]){
 		return obj;
 	}
-	/**@type {FastObjectObserver} */
+	/** @type {FastObjectObserver} */
 	const observer = obj[symbolObserver];
 	const originalObject = observer._observedObject;
 	/* istanbul ignore next */
@@ -24,7 +24,7 @@ const observedObjectToPureObject = function(obj){
 		result[k] = observedObjectToPureObject(originalObject[k]);
 	}
 	return result;
-}
+};
 
 /**
  * Nested object obserers, faster than proxies! (Except when using arrays)
@@ -41,7 +41,7 @@ class FastObjectObserver extends EventEmitter {
 		if(observedObject[symbolObserver]){
 			/* This hack is only used to facilitate Array#splice. Putting observed objects in observed objects can
 			   really cause problems and is considered undefined behaviour */
-			/**@type {FastObjectObserver} */
+			/** @type {FastObjectObserver} */
 			const oldObserver = observedObject[symbolObserver];
 			/* istanbul ignore next */
 			if(parentObserver == null || oldObserver._rootObserver !== parentObserver._rootObserver){
@@ -73,104 +73,106 @@ class FastObjectObserver extends EventEmitter {
 			// TODO: Add support for Buffers, maybe.
 			throw new TypeError("Currently only \"pure\" objects and arrays are supported");
 		}
-		
-		const proxy = this.proxyMode ? new Proxy(observedObject, {
-			get: (_, key) => {
-				switch(key){
-					case symbolObserver:
-						return this;
-					case "pop":
-						/* This hack exists because normally, when the "length" set trapped is triggered, when
-						   Array#pop is called the array's value is _already_ deleted! Which means we're unable to know
-						   if the removed value was within of our list of this._observedObjects */
-						return () => {
-							const poppedVal = this._observedObject[this._observedObject.length - 1];
-							this.object.length -= 1;
-							return poppedVal;
-						};
-					case "splice":
-						/* This hack exists for similar reasons as above */
-						return (...args) => {
-							/**@type {number} */
-							const length = this._observedObject.length;
-							const existingValues = new Set();
-							// Calling splice on a copy first, otherwise _deleteNestedObject won't work
-							/**@type {any[]} */
-							const arrayCopy = this._observedObject.slice();
-							const resultCopy = arrayCopy.splice(...args);
-							for(let i = 0; i < arrayCopy.length; i += 1){
-								const val = arrayCopy[i];
-								// This is mainly for objects but w/e
-								existingValues.add(val);
-							}
-							for(let i = 0; i < resultCopy.length; i += 1){
-								// This must be done before _deleteNestedObject otherwise it won't work
-								resultCopy[i] = observedObjectToPureObject(resultCopy[i]);
-							}
-							for(let i = 0; i < length; i += 1){
-								const val = this._observedObject[i];
-								if(!existingValues.has(val)){
-									this._deleteNestedObject(i);
+
+		const proxy = this.proxyMode ?
+			new Proxy(observedObject, {
+				get: (_, key) => {
+					switch(key){
+						case symbolObserver:
+							return this;
+						case "pop":
+							/* This hack exists because normally, when the "length" set trapped is triggered, when
+							Array#pop is called the array's value is _already_ deleted! Which means we're unable to know
+							if the removed value was within of our list of this._observedObjects */
+							return () => {
+								const poppedVal = this._observedObject[this._observedObject.length - 1];
+								this.object.length -= 1;
+								return poppedVal;
+							};
+						case "splice":
+							/* This hack exists for similar reasons as above */
+							return (...args) => {
+								/** @type {number} */
+								const length = this._observedObject.length;
+								const existingValues = new Set();
+								// Calling splice on a copy first, otherwise _deleteNestedObject won't work
+								/** @type {any[]} */
+								const arrayCopy = this._observedObject.slice();
+								const resultCopy = arrayCopy.splice(...args);
+								for(let i = 0; i < arrayCopy.length; i += 1){
+									const val = arrayCopy[i];
+									// This is mainly for objects but w/e
+									existingValues.add(val);
 								}
-							}
-							for(let i = 0; i < arrayCopy.length; i += 1){
-								// Emit the neccisary propery changed events
-								this.object[i] = arrayCopy[i];
-							}
-							this.object.length = arrayCopy.length;
-							return resultCopy;
-						};
-					default:
-						return this._observedObject[key];
-				}
-			},
-			set: (_, key, value) => {
-				if(typeof key !== "string"){
-					return false;
-				}
-				const keyNum = Number(key);
-				if((isNaN(keyNum) || keyNum < 0 || (keyNum % 1) !== 0) && key !== "length"){
-					return false;
-				}
-				const oldValue = this._observedObject[key];
-				if(Object.is(oldValue, value)){
-					return true;
-				}
-				this._deleteNestedObject(key);
-				if(key === "length"){
-					for(let i = this._observedObject.length - 1; i >= value; i -= 1){
-						// Ensure any truncated object values are removed
-						this._deleteNestedObject(i);
+								for(let i = 0; i < resultCopy.length; i += 1){
+									// This must be done before _deleteNestedObject otherwise it won't work
+									resultCopy[i] = observedObjectToPureObject(resultCopy[i]);
+								}
+								for(let i = 0; i < length; i += 1){
+									const val = this._observedObject[i];
+									if(!existingValues.has(val)){
+										this._deleteNestedObject(i);
+									}
+								}
+								for(let i = 0; i < arrayCopy.length; i += 1){
+									// Emit the neccisary propery changed events
+									this.object[i] = arrayCopy[i];
+								}
+								this.object.length = arrayCopy.length;
+								return resultCopy;
+							};
+						default:
+							return this._observedObject[key];
 					}
-				}
-				if(value === undefined){
-					delete this._observedObject[key];
-					delete this.object[key];
-					this._rootObserver.emit("propertyDeleted", this._objectPath.concat(
-						/* istanbul ignore next */
-						isNaN(keyNum) ? key : keyNum
-					));
+				},
+				set: (_, key, value) => {
+					if(typeof key !== "string"){
+						return false;
+					}
+					const keyNum = Number(key);
+					if((isNaN(keyNum) || keyNum < 0 || (keyNum % 1) !== 0) && key !== "length"){
+						return false;
+					}
+					const oldValue = this._observedObject[key];
+					if(Object.is(oldValue, value)){
+						return true;
+					}
+					this._deleteNestedObject(key);
+					if(key === "length"){
+						for(let i = this._observedObject.length - 1; i >= value; i -= 1){
+							// Ensure any truncated object values are removed
+							this._deleteNestedObject(i);
+						}
+					}
+					if(value === undefined){
+						delete this._observedObject[key];
+						delete this.object[key];
+						this._rootObserver.emit("propertyDeleted", this._objectPath.concat(
+							/* istanbul ignore next */
+							isNaN(keyNum) ? key : keyNum
+						));
+						return true;
+					}
+					this._observedObject[key] = value;
+					this._observeNestedObject(isNaN(keyNum) ? key : keyNum);
+					this._rootObserver.emit(
+						"propertyChanged",
+						this._objectPath.concat(isNaN(keyNum) ? key : keyNum),
+						value
+					);
 					return true;
 				}
-				this._observedObject[key] = value;
-				this._observeNestedObject(isNaN(keyNum) ? key : keyNum);
-				this._rootObserver.emit(
-					"propertyChanged",
-					this._objectPath.concat(isNaN(keyNum) ? key : keyNum),
-					value
-				);
-				return true;
-			}
-		}) : new Proxy(observedObject, {
-			get: (_, key) => {
-				this._defineGetterSetter(key);
-				return this._getterCallback(key);
-			},
-			set: (_, key, value) => {
-				this._defineGetterSetter(key, true);
-				return this._setterCallback(key, value);
-			}
-		});
+			}) :
+			new Proxy(observedObject, {
+				get: (_, key) => {
+					this._defineGetterSetter(key);
+					return this._getterCallback(key);
+				},
+				set: (_, key, value) => {
+					this._defineGetterSetter(key, true);
+					return this._setterCallback(key, value);
+				}
+			});
 		if(parentObserver == null){
 			this._observedObjects = new Set([observedObject]);
 			this._rootObserver = this;
@@ -200,8 +202,8 @@ class FastObjectObserver extends EventEmitter {
 			}
 		}else{
 			Object.defineProperty(this.object, symbolObserver, {
-				value: this,
 				configurable: false,
+				value: this,
 				writable: false
 			});
 			for(const k in observedObject){
@@ -237,7 +239,7 @@ class FastObjectObserver extends EventEmitter {
 		if(typeof obj !== "object" || obj === null || obj[symbolObserver] == null){
 			return;
 		}
-		/**@type {FastObjectObserver} */
+		/** @type {FastObjectObserver} */
 		const oldObserver = obj[symbolObserver];
 		if(oldObserver._observedObject == null){
 			return;
@@ -254,7 +256,6 @@ class FastObjectObserver extends EventEmitter {
 		}
 		delete this._observedObject[key];
 	}
-	
 	/**
 	 * @private
 	 * @param {string} key
@@ -332,11 +333,11 @@ class FastObjectObserver extends EventEmitter {
 				throw new Error("FastObjectObserver#setValue: Path leads to or includes a non-object");
 			}
 		}
-		/**@type {FastObjectObserver} */
+		/** @type {FastObjectObserver} */
 		const observer = object[symbolObserver];
 		/* istanbul ignore next */
 		if(observer == null){
-			throw new Error("This shouldn't happen, attempted to set a value on an non-observed object")
+			throw new Error("This shouldn't happen, attempted to set a value on an non-observed object");
 		}
 		const key = curPath.pop();
 		const rawObject = observer._observedObject;
